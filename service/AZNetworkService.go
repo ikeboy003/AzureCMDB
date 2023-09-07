@@ -73,7 +73,6 @@ func PopulateVirtualNetworksWithSubnets(vnets []models.AzureVirtualNetwork) erro
 		if err := json.Unmarshal(outputSubnets, &subnets); err != nil {
 			return err
 		}
-
 		// Use the method receiver to set subnets for the vnet
 		vnet.SetSubnets(subnets)
 
@@ -88,7 +87,7 @@ func PopulateVirtualNetworksWithSubnets(vnets []models.AzureVirtualNetwork) erro
 }
 
 func GetNICsAcrossSubscriptions() ([]models.AzureNIC, error) {
-	// First, get all subscriptions
+
 	subscriptions, err := GetAzureSubscriptions()
 	if err != nil {
 		return nil, err
