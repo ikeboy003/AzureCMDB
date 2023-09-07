@@ -1,7 +1,6 @@
 package main
 
 import (
-	"azurecmdb/dao"
 	service "azurecmdb/service"
 	"fmt"
 	"log"
@@ -19,12 +18,8 @@ func init() {
 
 func main() {
 
-	if res, err := service.GetAllVMs(); err != nil {
-		fmt.Println(err)
-	} else {
-		vmDao := dao.AZVMdao{}
-		vmDao.PerformTransaction(res)
-
+	if res1, err := service.GetNICsAcrossSubscriptions(); err != nil {
+		fmt.Println(err, res1)
 	}
 
 }

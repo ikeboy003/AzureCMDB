@@ -3,11 +3,11 @@ package models
 import "strings"
 
 type AzureResourceGroup struct {
-	AzureID        string                 `gorm:"tableName:resource_groups;primaryKey;type:varchar(512);not null" json:"id"`
-	Location       string                 `gorm:"type:varchar(255);not null" json:"location"`
-	Name           string                 `gorm:"type:varchar(255);not null" json:"name"`
-	Tags           map[string]interface{} `gorm:"type:jsonb" json:"tags"`
-	Type           string                 `gorm:"type:varchar(255);not null" json:"type"`
+	AzureID        string                 `json:"id" gorm:"tableName:resource_groups;primaryKey;type:varchar(512);not null"`
+	Location       string                 `json:"location" gorm:"type:varchar(255);not null"`
+	Name           string                 `json:"name" gorm:"type:varchar(255);not null"`
+	Tags           map[string]interface{} `json:"tags" gorm:"type:jsonb"`
+	Type           string                 `json:"type" gorm:"type:varchar(255);not null"`
 	SubscriptionID string                 `gorm:"type:varchar(512);not null"`
 	Subscription   AzureSubscription      `gorm:"references:SubscriptionID"`
 }
