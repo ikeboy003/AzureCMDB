@@ -63,7 +63,7 @@ func PopulateVirtualNetworksWithSubnets(vnets []models.AzureVirtualNetwork) erro
 	for i, vnet := range vnets {
 
 		// Fetch subnets for the virtual network
-		cmdSubnets := exec.Command("az", "network", "vnet", "subnet", "list", "-g", vnet.ResourceGroupName, "--vnet-name", vnet.Name, "-o", "json")
+		cmdSubnets := exec.Command("az", "network", "vnet", "subnet", "list", "-g", vnet.ResourceGroupName, "--vnet-name", vnet.ResourceName, "-o", "json")
 		outputSubnets, err := cmdSubnets.CombinedOutput()
 		if err != nil {
 			return err
@@ -101,7 +101,6 @@ func GetNICsAcrossSubscriptions() ([]models.AzureNIC, error) {
 		// Set active subscription
 		err := exec.Command("az", "account", "set", "--subscription", subscription.Name).Run()
 
-		fmt.Println(subscription.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set active subscription: %s", err)
 		}
@@ -117,15 +116,10 @@ func GetNICsAcrossSubscriptions() ([]models.AzureNIC, error) {
 		if err := json.Unmarshal(outputNICs, &nics); err != nil {
 			return nil, err
 		}
-		fmt.Println(subscription.Name)
-		for _, nic := range nics {
-			for _, v := range nic.IPConfigs {
-				fmt.Println(nic.Name, " ", v.PrivateIPAddress)
-			}
-		}
+
 		// Append to the allNICs slice
 		allNICs = append(allNICs, nics...)
 	}
-	fmt.Println(len(allNICs))
+
 	return allNICs, nil
 }

@@ -1,7 +1,8 @@
 package main
 
 import (
-	service "azurecmdb/service"
+	"azurecmdb/dao"
+	"azurecmdb/service"
 	"fmt"
 	"log"
 
@@ -18,8 +19,47 @@ func init() {
 
 func main() {
 
-	if res1, err := service.GetNICsAcrossSubscriptions(); err != nil {
-		fmt.Println(err, res1)
+	if err := PersistResource(); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Persisted Succesfully")
+	}
+}
+func PersistFoundations() error {
+	mgDAO := dao.AZManagementGroupDAO{}
+	if managementGroups, err := service.GetAzureManagementGroups(); err != nil {
+		return err
+	} else {
+		for _, mg := range managementGroups {
+			fmt.Println(mg.ResourceName)
+		}
+		mgDAO.PerformTransaction(managementGroups)
 	}
 
+	subDAO := dao.AZSubscriptionDAO{}
+	if subscriptions, err := service.GetAzureSubscriptions(); err != nil {
+		return err
+	} else {
+		subDAO.PerformTransaction(subscriptions)
+	}
+
+	rgDAO := dao.AzResourceDAO{}
+	if rg, err := service.GetAllResourceGroups(); err != nil {
+		return err
+	} else {
+		rgDAO.PerformTransaction(rg)
+	}
+
+	return nil
+}
+
+func PersistResource() error {
+	nicDAO := dao.AZNicDAo{}
+	if nics, err := service.GetNICsAcrossSubscriptions(); err != nil {
+		return err
+	} else {
+		nicDAO.PerformTransaction(nics)
+	}
+
+	return nil
 }

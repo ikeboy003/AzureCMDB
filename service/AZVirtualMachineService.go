@@ -20,7 +20,7 @@ func GetAllVMs() (map[string][]models.AzureVirtualMachine, error) {
 		var vms []models.AzureVirtualMachine
 
 		for _, rg := range subscriptionResourceGroups {
-			cmd := exec.Command("az", "vm", "list", "--resource-group", rg.Name, "--subscription", subscriptionID, "-o", "json")
+			cmd := exec.Command("az", "vm", "list", "--resource-group", rg.ResourceGroupName, "--subscription", subscriptionID, "-o", "json")
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				return nil, err
