@@ -6,7 +6,8 @@ import (
 	"os/exec"
 )
 
-func GetAzureSubscriptions() ([]models.AzureSubscription, error) {
+// Doesnt need to Be Concurrent
+func getAzureSubscriptions() ([]models.AzureSubscription, error) {
 	cmd := exec.Command("az", "account", "list", "-o", "json")
 	output, err := cmd.CombinedOutput()
 	if err != nil {

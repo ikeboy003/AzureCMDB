@@ -2,13 +2,12 @@ package dao
 
 import "azurecmdb/models"
 
-type AZVMdao struct {
+type AZNicDAo struct {
 }
 
-func (*AZVMdao) PerformTransaction(subVMMap map[string][]models.AzureVirtualMachine) error {
+func (AZNicDAo) PerformUpdateTransaction(nics []models.AzureNIC) error {
 
 	tx := db.Begin()
-
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -18,8 +17,8 @@ func (*AZVMdao) PerformTransaction(subVMMap map[string][]models.AzureVirtualMach
 		}
 	}()
 
-	for _, vm := range subVMMap {
-		if err := tx.Create(&vm).Error; err != nil {
+	for _, nic := range nics {
+		if err := tx.Create(&nic).Error; err != nil {
 			tx.Rollback()
 			return err
 
@@ -32,23 +31,25 @@ func (*AZVMdao) PerformTransaction(subVMMap map[string][]models.AzureVirtualMach
 	}
 	return nil
 }
-func (*AZVMdao) PerformSliceTransaction(vms []models.AzureVirtualMachine) error {
+
+func (AZNicDAo) PerformCreateTransaction(nics []models.AzureNIC) error {
+
 	tx := db.Begin()
 
 	if tx.Error != nil {
 		return tx.Error
 	}
-
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
 
-	for _, vm := range vms {
-		if err := tx.Create(&vm).Error; err != nil {
+	for _, nic := range nics {
+		if err := tx.Create(&nic).Error; err != nil {
 			tx.Rollback()
 			return err
+
 		}
 	}
 
@@ -56,6 +57,5 @@ func (*AZVMdao) PerformSliceTransaction(vms []models.AzureVirtualMachine) error 
 		tx.Rollback()
 		return err
 	}
-
 	return nil
 }

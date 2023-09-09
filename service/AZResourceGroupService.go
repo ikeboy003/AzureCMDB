@@ -45,3 +45,24 @@ func GetAllResourceGroups() (map[string][]models.AzureResourceGroup, error) {
 
 	return resourceGroupsMap, nil
 }
+
+func getResourceGroupsInSubscription(subscription models.AzureSubscription) ([]models.AzureResourceGroup, error) {
+
+	// Fetch resource groups for the given subscription
+	cmd := exec.Command("az", "group", "list", "-o", "json")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+
+	var resourceGroups []models.AzureResourceGroup
+	if err := json.Unmarshal(output, &resourceGroups); err != nil {
+		return nil, err
+	}
+
+	for i := range resourceGroups {
+		resourceGroups[i].SubscriptionID = subscription.SubscriptionID
+	}
+
+	return resourceGroups, nil
+}

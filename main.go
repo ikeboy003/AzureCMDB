@@ -5,6 +5,7 @@ import (
 	"azurecmdb/service"
 	"fmt"
 	"log"
+	"os/exec"
 
 	"github.com/joho/godotenv"
 )
@@ -19,47 +20,52 @@ func init() {
 
 func main() {
 
-	if err := PersistResource(); err != nil {
+	mgDAO, vmDao, nicDao := dao.AZManagementGroupDAO{}, dao.AZVMdao{}, dao.AZNicDAo{}
+	managementGroups, err := service.GetAzureManagementGroups()
+
+	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println("Persisted Succesfully")
-	}
-}
-func PersistFoundations() error {
-	mgDAO := dao.AZManagementGroupDAO{}
-	if managementGroups, err := service.GetAzureManagementGroups(); err != nil {
-		return err
-	} else {
-		for _, mg := range managementGroups {
-			fmt.Println(mg.ResourceName)
+		managementGroups[0].Subscriptions, err = service.GetAzureSubscriptions()
+
+		if err != nil {
+			fmt.Println("Couldnt Get Subscription")
+		} else {
+
+			for idx, subscription := range managementGroups[0].Subscriptions {
+
+				err := exec.Command("az", "account", "set", "--subscription", subscription.SubscriptionID).Run()
+				if err != nil {
+					fmt.Println(err)
+				}
+				nics, err := service.GetNICsInASubscription(subscription)
+				if err != nil {
+					fmt.Println("Couldnt Get Nic in Sub: ", subscription.Name, err)
+				}
+				managementGroups[0].Subscriptions[idx].ResourceGroups, err = service.GetResourceGroupsInSubscription(subscription)
+				if err != nil {
+					fmt.Println("Couldnt Get Resource Groups in Sub: ", subscription.Name, err)
+				}
+
+				if err != nil {
+					fmt.Println("Couldnt Get RG in Sub: ", subscription.Name, err)
+				}
+				vms, err := service.GetAllVMsinSubscription()
+				if err != nil {
+					fmt.Println("Couldnt Get VMs in Sub: ", subscription.Name, err)
+				}
+
+				vms, nics = service.InsertNicIntoVM(vms, nics)
+
+				nicDao.PerformCreateTransaction(nics)
+				vmDao.PerformSliceTransaction(vms)
+
+			}
 		}
-		mgDAO.PerformTransaction(managementGroups)
 	}
 
-	subDAO := dao.AZSubscriptionDAO{}
-	if subscriptions, err := service.GetAzureSubscriptions(); err != nil {
-		return err
-	} else {
-		subDAO.PerformTransaction(subscriptions)
+	if err = mgDAO.PerformTransaction(managementGroups); err != nil {
+		fmt.Println("couldnt Persist")
 	}
 
-	rgDAO := dao.AzResourceDAO{}
-	if rg, err := service.GetAllResourceGroups(); err != nil {
-		return err
-	} else {
-		rgDAO.PerformTransaction(rg)
-	}
-
-	return nil
-}
-
-func PersistResource() error {
-	nicDAO := dao.AZNicDAo{}
-	if nics, err := service.GetNICsAcrossSubscriptions(); err != nil {
-		return err
-	} else {
-		nicDAO.PerformTransaction(nics)
-	}
-
-	return nil
 }
