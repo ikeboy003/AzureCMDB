@@ -4,7 +4,7 @@ type AzureNIC struct {
 	AzureResource                   // Embedded AzResource
 	ETag          string            `json:"etag" gorm:"type:varchar(255)"` // Ensure it's unique
 	IPConfigs     []IPConfiguration `json:"ipConfigurations" gorm:"foreignKey:AllocatedNicName"`
-	VMName        *string           `json:"-" gorm:"default:nil"`
+	VMName        *string           `json:"-"`
 }
 
 type IPConfiguration struct {

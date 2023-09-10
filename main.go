@@ -3,8 +3,10 @@ package main
 import (
 	"azurecmdb/dao"
 	"azurecmdb/service"
+	"bufio"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 
 	"github.com/joho/godotenv"
@@ -19,8 +21,33 @@ func init() {
 }
 
 func main() {
+	vmDao := dao.AZVMdao{}
+	GetData()
 
-	mgDAO, vmDao, nicDao := dao.AZManagementGroupDAO{}, dao.AZVMdao{}, dao.AZNicDAo{}
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for {
+		fmt.Println("Enter VM name (or press 'q' to quit):")
+		scanner.Scan() // Get user input from console
+		vmName := scanner.Text()
+
+		if vmName == "q" {
+			break
+		}
+
+		if res, err := vmDao.IsThisNameTaken(vmName); err == nil && res {
+			fmt.Println("The name is taken!")
+		} else if err != nil {
+			fmt.Println("error")
+		} else {
+			fmt.Println("This name is not taken")
+		}
+	}
+}
+
+func GetData() {
+
+	mgDAO, vmDao := dao.AZManagementGroupDAO{}, dao.AZVMdao{}
 	managementGroups, err := service.GetAzureManagementGroups()
 
 	if err != nil {
@@ -57,7 +84,6 @@ func main() {
 
 				vms, nics = service.InsertNicIntoVM(vms, nics)
 
-				nicDao.PerformCreateTransaction(nics)
 				vmDao.PerformSliceTransaction(vms)
 
 			}

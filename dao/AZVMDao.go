@@ -32,6 +32,7 @@ func (*AZVMdao) PerformTransaction(subVMMap map[string][]models.AzureVirtualMach
 	}
 	return nil
 }
+
 func (*AZVMdao) PerformSliceTransaction(vms []models.AzureVirtualMachine) error {
 	tx := db.Begin()
 
@@ -58,4 +59,15 @@ func (*AZVMdao) PerformSliceTransaction(vms []models.AzureVirtualMachine) error 
 	}
 
 	return nil
+}
+
+func (t *AZVMdao) IsThisNameTaken(name string) (bool, error) {
+	var count int64
+
+	err := db.Model(&models.AzureVirtualMachine{}).Where("resource_name = ?", name).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
