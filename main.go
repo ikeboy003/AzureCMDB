@@ -37,7 +37,7 @@ func main() {
 
 		vm, exists := vmMap[vmName]
 		if !exists {
-			fmt.Println("Doesn't Exist")
+			fmt.Println("This Vm Doesn't Exist")
 		} else {
 			fmt.Println(vm.Tags)
 		}
