@@ -2,6 +2,7 @@ package main
 
 import (
 	"azurecmdb/dao"
+	"azurecmdb/models"
 	"azurecmdb/service"
 	"bufio"
 	"fmt"
@@ -21,28 +22,34 @@ func init() {
 }
 
 func main() {
-	vmDao := dao.AZVMdao{}
-	GetData()
+	vmData := GetVMData()
+	vmMap := createVMMap(vmData)
 
 	scanner := bufio.NewScanner(os.Stdin)
-
 	for {
 		fmt.Println("Enter VM name (or press 'q' to quit):")
-		scanner.Scan() // Get user input from console
+		scanner.Scan()
 		vmName := scanner.Text()
 
 		if vmName == "q" {
 			break
 		}
 
-		if res, err := vmDao.IsThisNameTaken(vmName); err == nil && res {
-			fmt.Println("The name is taken!")
-		} else if err != nil {
-			fmt.Println("error")
+		vm, exists := vmMap[vmName]
+		if !exists {
+			fmt.Println("Doesn't Exist")
 		} else {
-			fmt.Println("This name is not taken")
+			fmt.Println(vm.Tags)
 		}
 	}
+}
+
+func createVMMap(vmData []models.AzureVirtualMachine) map[string]models.AzureVirtualMachine {
+	vmMap := make(map[string]models.AzureVirtualMachine)
+	for _, vm := range vmData {
+		vmMap[vm.ResourceName] = vm // Assuming there's a 'Name' field in your AzureVirtualMachine struct
+	}
+	return vmMap
 }
 
 func GetData() {
@@ -93,5 +100,48 @@ func GetData() {
 	if err = mgDAO.PerformTransaction(managementGroups); err != nil {
 		fmt.Println("couldnt Persist")
 	}
+
+}
+
+func GetVMData() []models.AzureVirtualMachine {
+
+	managementGroups, err := service.GetAzureManagementGroups()
+
+	allVms := []models.AzureVirtualMachine{}
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		managementGroups[0].Subscriptions, err = service.GetAzureSubscriptions()
+
+		if err != nil {
+			fmt.Println("Couldnt Get Subscription")
+		} else {
+
+			for _, subscription := range managementGroups[0].Subscriptions {
+
+				err := exec.Command("az", "account", "set", "--subscription", subscription.SubscriptionID).Run()
+				if err != nil {
+					fmt.Println(err)
+				}
+				nics, err := service.GetNICsInASubscription(subscription)
+				if err != nil {
+					fmt.Println("Couldnt Get Nic in Sub: ", subscription.Name, err)
+				}
+
+				vms, err := service.GetAllVMsinSubscription()
+				if err != nil {
+					fmt.Println("Couldnt Get VMs in Sub: ", subscription.Name, err)
+				}
+
+				vms, nics = service.InsertNicIntoVM(vms, nics)
+
+				allVms = append(allVms, vms...)
+
+			}
+		}
+	}
+
+	return allVms
 
 }
